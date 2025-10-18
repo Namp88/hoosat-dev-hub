@@ -56,7 +56,7 @@ The Hoosat SDK provides a complete, type-safe interface for interacting with the
 - [Quick Start](./getting-started/quick-start.md) - Your first Hoosat application
 - [Core Concepts](./core-concepts/architecture.md) - Understand the SDK architecture
 - [API Reference](./api-reference/client.md) - Complete API documentation
-- [Examples](./examples) - Working code examples
+- [Examples](./examples/index.md) - Working code examples
 - [GitHub Repository](https://github.com/Namp88/hoosat-sdk)
 - [NPM Package](https://www.npmjs.com/package/hoosat-sdk)
 
@@ -165,7 +165,7 @@ Ready to get started? Follow these guides:
 1. **[Installation](./getting-started/installation.md)** - Install the SDK in your project
 2. **[Quick Start](./getting-started/quick-start.md)** - Build your first Hoosat app
 3. **[Core Concepts](./core-concepts/architecture.md)** - Learn the fundamentals
-4. **[Examples](./examples)** - Explore working code samples
+4. **[Examples](./examples/index.md)** - Explore working code samples
 
 ## Community & Support
 

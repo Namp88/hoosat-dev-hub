@@ -491,7 +491,3 @@ import type {
 
 ## Next Steps
 
-- [Client & Connections](./client-connections.md) - Deep dive into HoosatClient
-- [Cryptography](./cryptography.md) - Understanding crypto operations
-- [Transactions](./transactions.md) - Transaction building in detail
-- [Events](./events.md) - Real-time event streaming

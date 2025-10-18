@@ -702,8 +702,6 @@ await window.hoosat.requestAccounts();
 ## Next Steps
 
 - [User Guide](./user-guide.md) - Guide for wallet users
-- [Security Guide](./security.md) - Security best practices
-- [Developer Reference](./developer-reference.md) - Complete API reference
 - [Browser SDK](../sdk-web/intro.md) - Build your own wallet
 
 ## Support

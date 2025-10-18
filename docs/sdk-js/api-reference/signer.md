@@ -810,4 +810,3 @@ const message = `Transfer ${amount} to ${recipientAddress}`;
 
 - [HoosatCrypto](./crypto.md) - Cryptographic operations
 - [Security Guide](../guides/security.md) - Security best practices
-- [Authentication Guide](../guides/authentication.md) - Implement auth systems

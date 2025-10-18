@@ -473,4 +473,4 @@ privateKey = null as any;
 - [Quick Start](./getting-started/quick-start.md) - Build your first dApp
 - [API Reference](./api-reference) - Complete API documentation
 - [Examples](./examples) - Working examples
-- [Guides](./guides) - Integration guides
+- [Guides](./guides/browser-wallet.md) - Integration guides

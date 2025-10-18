@@ -425,5 +425,3 @@ Need help?
 ## Next Steps
 
 - [DApp Integration](./dapp-integration.md) - For developers
-- [Security Guide](./security.md) - Advanced security tips
-- [Developer Reference](./developer-reference.md) - Technical details

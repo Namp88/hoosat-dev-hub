@@ -279,8 +279,6 @@ The extension enforces strong password requirements:
 
 - [DApp Integration Guide](./dapp-integration.md) - Integrate your dApp with Hoosat Wallet
 - [User Guide](./user-guide.md) - Complete user manual
-- [Security Guide](./security.md) - Security best practices and threat model
-- [Developer Reference](./developer-reference.md) - Technical reference
 
 ## Links
 

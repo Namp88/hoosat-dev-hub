@@ -577,4 +577,3 @@ if (walletNetwork !== recipientNetwork) {
 
 - [HoosatCrypto](./crypto.md) - Cryptographic operations
 - [HoosatTxBuilder](./tx-builder.md) - Transaction building
-- [Validation Guide](../guides/validation.md) - Input validation patterns

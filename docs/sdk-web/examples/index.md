@@ -307,5 +307,4 @@ async function waitForConfirmation(txId, maxAttempts = 30) {
 ## Next Steps
 
 - [API Reference](../api-reference) - Complete API documentation
-- [Guides](../guides) - Integration guides
 - [GitHub Repository](https://github.com/Namp88/hoosat-sdk-web) - Source code

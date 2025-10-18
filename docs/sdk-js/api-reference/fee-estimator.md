@@ -436,5 +436,4 @@ setInterval(async () => {
 ## Next Steps
 
 - [HoosatTxBuilder](./tx-builder.md) - Use fees with transaction builder
-- [Fee Guide](../guides/fee-management.md) - Detailed fee management guide
-- [Examples](../examples/transaction) - Fee estimation examples
+- [Transactions Guide](../guides/transactions.md) - Transaction building with fees

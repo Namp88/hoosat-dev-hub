@@ -161,5 +161,4 @@ Ensure you're using a bundler that supports ES modules (Vite, Webpack 5, etc.)
 ## Next Steps
 
 - [Quick Start](./quick-start.md) - Build your first dApp
-- [Configuration](./configuration.md) - Configure the SDK
 - [API Reference](../api-reference) - Complete API documentation

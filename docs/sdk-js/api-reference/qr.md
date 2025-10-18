@@ -563,6 +563,5 @@ const printQR = await HoosatQR.generatePaymentQR(request, {
 
 ## Next Steps
 
-- [Payment Integration Guide](../guides/payment-integration.md) - Integrate payments
 - [HoosatUtils](./utils.md) - Validation utilities
 - [Transaction Guide](../guides/transactions.md) - Transaction handling

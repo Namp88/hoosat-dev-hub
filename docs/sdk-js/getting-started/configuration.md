@@ -369,4 +369,3 @@ process.on('SIGINT', async () => {
 
 - [Core Concepts](../core-concepts/architecture.md) - Understand SDK architecture
 - [API Reference](../api-reference/client.md) - Complete API documentation
-- [Multi-Node Setup Guide](../guides/multi-node-setup.md) - Detailed multi-node configuration

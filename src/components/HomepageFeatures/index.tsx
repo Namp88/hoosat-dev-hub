@@ -17,7 +17,7 @@ const ProductList: ProductItem[] = [
     title: 'Node.js SDK',
     icon: '🚀',
     description: 'Full-featured SDK for server-side applications. gRPC connection, event streaming, transaction building, and more.',
-    link: '/docs/sdk-js/intro',
+    link: '/docs/sdk-js',
     highlight: 'Server-side',
   },
   {

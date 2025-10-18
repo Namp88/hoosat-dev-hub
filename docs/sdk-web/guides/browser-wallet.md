@@ -512,4 +512,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 - [API Reference](../api-reference) - Complete API documentation
 - [Examples](../examples) - Working examples
-- [Security Guide](./security.md) - Security best practices

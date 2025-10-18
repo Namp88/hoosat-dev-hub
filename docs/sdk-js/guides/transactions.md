@@ -951,4 +951,3 @@ const client = new HoosatClient({
 
 - [Batch Payments Guide](./batch-payments.md) - Advanced multi-recipient payments
 - [Real-time Monitoring](./real-time-monitoring.md) - Monitor transactions
-- [Fee Management](./fee-management.md) - Advanced fee strategies

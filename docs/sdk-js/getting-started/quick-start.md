@@ -400,6 +400,5 @@ Now that you understand the basics:
 
 ## Need Help?
 
-- Check the [troubleshooting guide](../guides/troubleshooting.md)
 - Review [working examples](../examples) from the SDK repository
 - Ask in [GitHub issues](https://github.com/Namp88/hoosat-sdk/issues)

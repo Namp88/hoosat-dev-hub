@@ -8,7 +8,6 @@ Complete API reference for the Hoosat Browser SDK.
 
 ## Core Modules
 
-### [HoosatCrypto](./crypto.md)
 
 Browser-native cryptographic operations.
 
@@ -19,7 +18,6 @@ Browser-native cryptographic operations.
 - `getTransactionId(tx)` - Calculate TX ID
 - `blake3Hash(data)` - BLAKE3 hashing
 
-### [HoosatWebClient](./client.md)
 
 REST API client for Hoosat nodes.
 
@@ -30,7 +28,6 @@ REST API client for Hoosat nodes.
 - `getFeeEstimate()` - Get fee recommendations
 - `getNetworkInfo()` - Get network information
 
-### [HoosatTxBuilder](./tx-builder.md)
 
 Transaction builder with fluent API.
 
@@ -41,7 +38,6 @@ Transaction builder with fluent API.
 - `setFee(fee)` - Set fee
 - `sign(privateKey?)` - Sign transaction
 
-### [HoosatSigner](./signer.md)
 
 Message signing for authentication.
 
@@ -51,7 +47,6 @@ Message signing for authentication.
 - `createSignedMessage(privateKey, message, address)` - Create signed message object
 - `verifySignedMessage(signedMessage, publicKey)` - Verify signed message
 
-### [HoosatQR](./qr.md)
 
 QR code generation for payments.
 
@@ -61,7 +56,6 @@ QR code generation for payments.
 - `buildPaymentURI(params)` - Build payment URI
 - `parsePaymentURI(uri)` - Parse payment URI
 
-### [HoosatUtils](./utils.md)
 
 Utility functions.
 
@@ -207,7 +201,4 @@ const DUST_THRESHOLD = 1000n;
 
 ## Next Steps
 
-- [HoosatCrypto](./crypto.md) - Cryptographic operations
-- [HoosatWebClient](./client.md) - REST API client
-- [HoosatTxBuilder](./tx-builder.md) - Transaction builder
 - [Examples](../examples) - Working examples

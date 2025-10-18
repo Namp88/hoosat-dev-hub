@@ -17,7 +17,7 @@ Hoosat is a high-performance blockchain platform designed for scalability and de
 - [Quick Start Guide](./quick-start.md) - Get up and running in minutes
 
 ### 📚 SDKs & Tools
-- [Node.js SDK](./sdk-js/intro.md) - Full-featured SDK for server-side applications
+- [Node.js SDK](./sdk-js) - Full-featured SDK for server-side applications
 - [Browser SDK](./sdk-web/intro.md) - Lightweight SDK for web applications (~150KB gzipped)
 - [REST API](./rest-api/intro.md) - HTTP API for any programming language
 - [Wallet Extension](./wallet-extension/intro.md) - Browser extension wallet for end users
@@ -25,7 +25,7 @@ Hoosat is a high-performance blockchain platform designed for scalability and de
 ### 🔌 Integration Examples
 - [DApp Integration](./wallet-extension/dapp-integration.md) - Connect your DApp to Hoosat Wallet
 - [Transaction Building](./sdk-js/guides/transactions.md) - Build and submit transactions
-- [Event Streaming](./sdk-js/guides/events.md) - Subscribe to blockchain events
+- [Real-time Monitoring](./sdk-js/guides/real-time-monitoring.md) - Monitor blockchain events
 
 ## Features
 
@@ -51,7 +51,7 @@ REST API for any programming language, browser SDK for web apps, Node.js SDK for
 
 Ready to start building? Choose your path:
 
-- **Building server-side apps?** → [Node.js SDK](./sdk-js/intro.md)
+- **Building server-side apps?** → [Node.js SDK](./sdk-js)
 - **Building web apps?** → [Browser SDK](./sdk-web/intro.md)
 - **Using another language?** → [REST API](./rest-api/intro.md)
 - **Building a dApp?** → [Wallet Extension Integration](./wallet-extension/dapp-integration.md)

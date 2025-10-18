@@ -60,7 +60,7 @@ console.log('TX ID:', txId);
 - ✅ Wallet management
 - ✅ Fee estimation
 
-[Full Node.js SDK Documentation →](./sdk-js/intro)
+[Full Node.js SDK Documentation →](./sdk-js)
 
 </TabItem>
 
@@ -383,7 +383,7 @@ UTXO-based model (like Bitcoin):
 ### For Developers
 
 1. **Building a backend service?**
-   - → [Node.js SDK Documentation](./sdk-js/intro)
+   - → [Node.js SDK Documentation](./sdk-js)
 
 2. **Building a web app?**
    - → [Browser SDK Documentation](./sdk-web/intro)
