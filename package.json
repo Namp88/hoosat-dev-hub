@@ -1,6 +1,27 @@
 {
   "name": "hoosat-hub",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Official documentation hub for Hoosat blockchain - comprehensive SDKs, APIs, and developer resources",
+  "author": {
+    "name": "Andrei Kliubchenko",
+    "email": "namp2988@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Namp88/hoosat-dev-hub.git"
+  },
+  "homepage": "https://hub.hoosat.net",
+  "keywords": [
+    "hoosat",
+    "blockchain",
+    "documentation",
+    "sdk",
+    "api",
+    "developer-hub",
+    "blockdag",
+    "cryptocurrency"
+  ],
+  "license": "MIT",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
