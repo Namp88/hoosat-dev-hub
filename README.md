@@ -2,7 +2,7 @@
 
 Official documentation hub for Hoosat blockchain - comprehensive SDKs, APIs, and developer resources.
 
-🌐 **Live Site:** [hub.hoosat.fi](https://hub.hoosat.fi)
+🌐 **Live Site:** [hub.hoosat.net](https://hub.hoosat.net)
 
 Built with [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
