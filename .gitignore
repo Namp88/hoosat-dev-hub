@@ -8,6 +8,13 @@
 .docusaurus
 .cache-loader
 
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
 # Misc
 .DS_Store
 .env.local

@@ -1,41 +1,39 @@
 # Hoosat Developer Hub
 
-Official documentation hub for Hoosat blockchain SDKs, integrations, and developer resources.
+Official documentation hub for Hoosat blockchain - comprehensive SDKs, APIs, and developer resources.
+
+🌐 **Live Site:** [hub.hoosat.fi](https://hub.hoosat.fi)
 
 Built with [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-## Overview
+## 📚 What's Included
 
 This repository contains comprehensive documentation for:
 
-- **JavaScript/TypeScript SDK** - Full-featured SDK for web and Node.js
-- **Python SDK** - Pythonic interface for blockchain interaction
-- **Rust SDK** - High-performance SDK for systems programming
-- **Integration Guides** - Wallets, exchanges, payment gateways
-- **Developer Guides** - Tutorials and best practices
-- **API Reference** - Complete API documentation
+- **Node.js SDK** (`hoosat-sdk`) - Full-featured SDK for server-side applications with gRPC support
+- **Browser SDK** (`hoosat-sdk-web`) - Lightweight SDK for web applications (~150KB gzipped)
+- **REST API** - HTTP API for any programming language
+- **Wallet Extension** - Browser extension wallet with dApp integration support
+- **Integration Examples** - DApp integration, transaction building, event streaming
+- **Developer Guides** - Quick start, tutorials, and best practices
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18.0 or higher
+- Node.js 20.0 or higher
 - npm or yarn
 
 ### Installation
 
 ```bash
 npm install
-# or
-yarn install
 ```
 
 ### Local Development
 
 ```bash
 npm start
-# or
-yarn start
 ```
 
 This command starts a local development server at `http://localhost:3000/`. Most changes are reflected live without restarting the server.
@@ -44,8 +42,6 @@ This command starts a local development server at `http://localhost:3000/`. Most
 
 ```bash
 npm run build
-# or
-yarn build
 ```
 
 Generates static content into the `build` directory for production deployment.
@@ -54,61 +50,64 @@ Generates static content into the `build` directory for production deployment.
 
 ```bash
 npm run serve
-# or
-yarn serve
 ```
 
 Serves the production build locally for testing.
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 hub/
-├── docs/                    # Documentation content
-│   ├── intro.md            # Landing page
-│   ├── quick-start.md      # Quick start guide
-│   ├── sdk-js/             # JavaScript SDK docs
-│   ├── sdk-python/         # Python SDK docs
-│   ├── sdk-rust/           # Rust SDK docs
-│   ├── integrations/       # Integration guides
-│   ├── guides/             # Developer guides
-│   └── api-reference/      # API documentation
-├── blog/                   # Blog posts
-├── src/                    # React components
-│   ├── components/         # Custom React components
-│   ├── css/                # Global styles
-│   └── pages/              # Custom pages
-├── static/                 # Static assets
-│   └── img/                # Images
-├── docusaurus.config.ts    # Site configuration
-└── sidebars.ts             # Sidebar configuration
+├── docs/                       # Documentation content
+│   ├── intro.md               # Introduction
+│   ├── quick-start.md         # Quick start guide
+│   ├── sdk-js/                # Node.js SDK documentation
+│   ├── sdk-web/               # Browser SDK documentation
+│   ├── rest-api/              # REST API documentation
+│   └── wallet-extension/      # Wallet extension documentation
+├── blog/                      # Blog posts (optional)
+├── src/                       # React components and pages
+│   ├── components/            # Custom React components
+│   │   └── HomepageFeatures/ # Landing page sections
+│   ├── css/                   # Global styles
+│   └── pages/                 # Custom pages
+├── static/                    # Static assets
+│   └── img/                   # Images (logo, icons)
+├── docusaurus.config.ts       # Site configuration
+└── sidebars.ts                # Sidebar navigation
 ```
 
-## Documentation Organization
+## 📖 Documentation Organization
 
 ### SDKs
 
 Each SDK has its own section with:
 - Introduction and installation
 - Quick start examples
-- Feature guides (wallets, transactions, contracts)
+- Getting started guides
 - API reference
-- Code examples
+- Practical examples
+- Security best practices
 
-### Integrations
+### REST API
 
-Integration guides for:
-- Cryptocurrency exchanges
-- Payment gateways
-- Wallet providers
-- Block explorers
-- Analytics platforms
+HTTP API documentation with:
+- Base URL and authentication
+- Node endpoints
+- Address endpoints
+- Blockchain queries
+- Transaction submission
+- Network information
 
-### Guides
+### Wallet Extension
 
-Step-by-step tutorials and best practices for common use cases.
+Browser extension documentation:
+- User guide for wallet users
+- DApp integration guide for developers
+- API reference
+- Security considerations
 
-## Contributing
+## 🛠️ Contributing
 
 ### Adding Documentation
 
@@ -137,60 +136,88 @@ const client = new HoosatClient();
 ### Markdown Features
 
 Docusaurus supports:
-- Standard Markdown
-- MDX (React components in Markdown)
+- Standard Markdown and MDX (React components in Markdown)
 - Code blocks with syntax highlighting
-- Tabs and interactive elements
+- Tabs for multiple examples
 - Admonitions (notes, warnings, tips)
+- Interactive elements
 
 See [Docusaurus Markdown Features](https://docusaurus.io/docs/markdown-features) for more.
 
-## Deployment
+## 🚢 Deployment
+
+The site can be deployed to various platforms:
 
 ### GitHub Pages
 
 ```bash
-GIT_USER=<Your GitHub username> npm run deploy
+npm run deploy
 ```
 
 ### Vercel / Netlify
 
-Connect your repository and configure build settings:
+Connect your repository and configure:
 - Build command: `npm run build`
 - Output directory: `build`
 
 ### Manual Deployment
 
-Build the static site and deploy the `build/` directory to any static hosting:
-
 ```bash
 npm run build
-# Upload build/ directory to your hosting
+# Upload build/ directory to your hosting provider
 ```
 
-## Configuration
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+## ⚙️ Configuration
 
 ### Site Config
 
 Edit `docusaurus.config.ts` to configure:
 - Site metadata (title, tagline, URL)
-- Theme settings
-- Navbar and footer
-- Plugins
+- Theme settings (colors, dark mode)
+- Navbar and footer links
+- Social card images
+- Plugins and presets
 
 ### Sidebar Config
 
 Edit `sidebars.ts` to customize:
-- Sidebar structure
+- Sidebar structure and organization
 - Category groupings
 - Auto-generated vs manual sidebars
 
-## License
+## 🎨 Features
 
-Copyright 2025 Hoosat
+- **Modern Landing Page** - Product showcase, features, quick start
+- **Responsive Design** - Mobile, tablet, and desktop support
+- **Dark Mode** - Automatic theme switching
+- **Search** - Built-in documentation search
+- **Fast Performance** - Static site generation
+- **SEO Optimized** - Meta tags and social cards
 
-## Support
+## 🔗 Links
 
-- [Discord](https://discord.gg/hoosat)
-- [GitHub Issues](https://github.com/hoosat/hub/issues)
-- [Official Website](https://hoosat.fi)
+- **Official Website**: [network.hoosat.fi](https://network.hoosat.fi)
+- **Discord**: [Join community](https://discord.gg/mFBfNpNA)
+- **Twitter**: [@HoosatNetwork](https://x.com/HoosatNetwork)
+- **Telegram**: [HoosatNetwork](https://t.me/HoosatNetwork)
+- **GitHub Organization**: [Hoosat-Oy](https://github.com/Hoosat-Oy)
+- **Developer GitHub**: [Namp88](https://github.com/Namp88)
+
+## 📦 Related Packages
+
+- [`hoosat-sdk`](https://www.npmjs.com/package/hoosat-sdk) - Node.js SDK
+- [`hoosat-sdk-web`](https://www.npmjs.com/package/hoosat-sdk-web) - Browser SDK
+- `hoosat-proxy` - REST API server
+- `hoosat-web-extension` - Browser wallet extension
+
+## 📄 License
+
+Copyright © 2025 Hoosat. Built with Docusaurus.
+
+## 💬 Support
+
+- **Documentation Issues**: [GitHub Issues](https://github.com/Namp88/hoosat-dev-hub/issues)
+- **Community Support**: [Discord](https://discord.gg/mFBfNpNA) | [Telegram](https://t.me/HoosatNetwork)
+- **Developer Contact**: [@Namp88](https://github.com/Namp88)
