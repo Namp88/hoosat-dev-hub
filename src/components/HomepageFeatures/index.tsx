@@ -65,7 +65,7 @@ const FeatureList: FeatureItem[] = [
   {
     title: 'Highly Scalable',
     icon: '📈',
-    description: 'BlockDAG architecture with 10 blocks per second throughput. Built to handle real-world application demands without congestion.',
+    description: 'BlockDAG architecture with 1 block per second throughput. Built to handle real-world application demands without congestion.',
   },
   {
     title: 'Minimal Fees',
