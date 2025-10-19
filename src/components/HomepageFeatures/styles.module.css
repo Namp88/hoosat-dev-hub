@@ -4,6 +4,10 @@
   background: var(--ifm-background-surface-color);
 }
 
+.products :global(.col--4) {
+  margin-bottom: 16px !important;
+}
+
 .productCard {
   display: flex;
   flex-direction: column;
@@ -40,11 +44,11 @@
   padding: 0.25rem 0.75rem;
   margin-bottom: 1rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: var(--ifm-color-primary-lightest);
-  color: var(--ifm-color-primary-dark);
+  background: var(--ifm-color-primary);
+  color: #ffffff;
   border-radius: 12px;
 }
 

@@ -12,6 +12,7 @@ This repository contains comprehensive documentation for:
 
 - **Node.js SDK** (`hoosat-sdk`) - Full-featured SDK for server-side applications with gRPC support
 - **Browser SDK** (`hoosat-sdk-web`) - Lightweight SDK for web applications (~150KB gzipped)
+- **Motoko Package** (`hoosat-mo`) - Internet Computer canister SDK with threshold ECDSA signing
 - **REST API** - HTTP API for any programming language
 - **Wallet Extension** - Browser extension wallet with dApp integration support
 - **Integration Examples** - DApp integration, transaction building, event streaming
@@ -63,6 +64,7 @@ hub/
 │   ├── quick-start.md         # Quick start guide
 │   ├── sdk-js/                # Node.js SDK documentation
 │   ├── sdk-web/               # Browser SDK documentation
+│   ├── hoosat-mo/             # Motoko Package documentation
 │   ├── rest-api/              # REST API documentation
 │   └── wallet-extension/      # Wallet extension documentation
 ├── blog/                      # Blog posts (optional)
@@ -209,6 +211,7 @@ Edit `sidebars.ts` to customize:
 
 - [`hoosat-sdk`](https://www.npmjs.com/package/hoosat-sdk) - Node.js SDK
 - [`hoosat-sdk-web`](https://www.npmjs.com/package/hoosat-sdk-web) - Browser SDK
+- [`hoosat-mo`](https://mops.one/hoosat-mo) - Motoko Package for Internet Computer
 - `hoosat-proxy` - REST API server
 - `hoosat-web-extension` - Browser wallet extension
 

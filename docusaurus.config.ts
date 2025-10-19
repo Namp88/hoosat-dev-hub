@@ -85,6 +85,11 @@ const config: Config = {
               sidebarId: 'sdkWebSidebar',
               label: 'Browser SDK',
             },
+            {
+              type: 'docSidebar',
+              sidebarId: 'hoosatMoSidebar',
+              label: 'Motoko Package (IC)',
+            },
           ],
         },
         {
@@ -122,6 +127,10 @@ const config: Config = {
             {
               label: 'Browser SDK',
               to: '/docs/sdk-web/intro',
+            },
+            {
+              label: 'Motoko Package',
+              to: '/docs/hoosat-mo',
             },
             {
               label: 'REST API',

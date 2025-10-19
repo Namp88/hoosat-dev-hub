@@ -28,6 +28,13 @@ const ProductList: ProductItem[] = [
     highlight: 'Client-side',
   },
   {
+    title: 'Motoko Package',
+    icon: '🔷',
+    description: 'Internet Computer canister SDK. Threshold ECDSA signing, on-chain wallets, cross-chain bridges.',
+    link: '/docs/hoosat-mo',
+    highlight: 'IC Canisters',
+  },
+  {
     title: 'REST API',
     icon: '⚡',
     description: 'HTTP API for any programming language. Query blockchain, send transactions, manage addresses.',
@@ -84,7 +91,7 @@ const FeatureList: FeatureItem[] = [
 
 function Product({title, icon, description, link, highlight}: ProductItem) {
   return (
-    <div className={clsx('col col--3')}>
+    <div className={clsx('col col--4 mb-16')}>
       <Link to={link} className={styles.productCard}>
         <div className={styles.productIcon}>{icon}</div>
         <Heading as="h3">{title}</Heading>
