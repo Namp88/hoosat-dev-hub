@@ -101,6 +101,7 @@ interface HoosatProvider {
   requestAccounts(): Promise<string[]>;
   connect(): Promise<string[]>;  // Alias for requestAccounts
   getAccounts(): Promise<string[]>;
+  disconnect(): Promise<void>;   // Disconnect from wallet
 
   // Blockchain Queries
   getBalance(address: string): Promise<string>;
@@ -115,6 +116,19 @@ interface HoosatProvider {
   removeListener(event: string, callback: Function): void;
 }
 ```
+
+### API Methods Summary
+
+| Method | Parameters | Returns | Description |
+|--------|-----------|---------|-------------|
+| `requestAccounts()` | - | `Promise<string[]>` | Request connection (shows popup) |
+| `connect()` | - | `Promise<string[]>` | Alias for requestAccounts |
+| `getAccounts()` | - | `Promise<string[]>` | Get connected accounts (no popup) |
+| `disconnect()` | - | `Promise<void>` | Disconnect from wallet (removes from Connected Sites) |
+| `getBalance(address)` | `address: string` | `Promise<string>` | Get balance in sompi |
+| `sendTransaction(params)` | `{to, amount, fee?}` | `Promise<string>` | Send transaction, returns TX ID |
+| `signMessage(message)` | `message: string` | `Promise<string>` | Sign message, returns signature |
+| `getNetwork()` | - | `Promise<string>` | Get current network |
 
 ## Connection Management
 
@@ -188,6 +202,55 @@ async function connectWallet() {
     } else {
       console.error('Connection error:', error);
     }
+  }
+}
+```
+
+### Disconnect from Wallet
+
+DApps can programmatically disconnect from the wallet, removing the site from the Connected Sites list:
+
+```javascript
+// Disconnect from wallet
+try {
+  await window.hoosat.disconnect();
+  console.log('✅ Disconnected successfully');
+  // Site is removed from "Connected Sites" in the wallet
+} catch (error) {
+  console.error('Disconnect failed:', error);
+}
+```
+
+**When to use disconnect:**
+- User logs out from your DApp
+- User switches to a different wallet
+- Session expires or becomes invalid
+- User explicitly requests to disconnect
+
+**Benefits:**
+- Keeps the wallet's Connected Sites list clean and organized
+- Better user privacy and security
+- Clear connection state management
+- Professional UX (similar to MetaMask, WalletConnect)
+
+**Complete logout example:**
+
+```javascript
+async function logout() {
+  try {
+    // 1. Clear local session data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userAddress');
+
+    // 2. Disconnect from wallet
+    await window.hoosat.disconnect();
+
+    // 3. Update UI
+    updateUIForLoggedOutState();
+
+    console.log('✅ Logged out successfully');
+  } catch (error) {
+    console.error('Logout failed:', error);
   }
 }
 ```
@@ -651,6 +714,7 @@ The extension includes a comprehensive test DApp (`test-dapp.html`):
 # Open test-dapp.html in your browser
 # Tests all features:
 # - Connection
+# - Disconnect
 # - Balance queries
 # - Transactions
 # - Message signing
@@ -662,6 +726,9 @@ The extension includes a comprehensive test DApp (`test-dapp.html`):
 ```javascript
 // Test connection
 await window.hoosat.requestAccounts();
+
+// Test disconnect
+await window.hoosat.disconnect();
 
 // Test balance
 await window.hoosat.getBalance('hoosat:qp...');
