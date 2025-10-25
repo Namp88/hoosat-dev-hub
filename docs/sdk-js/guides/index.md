@@ -120,9 +120,7 @@ import {
   HoosatClient,
   HoosatCrypto,
   HoosatTxBuilder,
-  HoosatFeeEstimator,
-  HoosatUtils,
-  FeePriority
+  HoosatUtils
 } from 'hoosat-sdk';
 
 // Setup
@@ -133,9 +131,8 @@ const wallet = HoosatCrypto.importKeyPair(process.env.WALLET_PRIVATE_KEY!);
 const utxosResult = await client.getUtxosByAddresses([wallet.address]);
 const utxos = utxosResult.result.utxos;
 
-// Estimate fee
-const feeEstimator = new HoosatFeeEstimator(client);
-const fee = await feeEstimator.estimateFee(FeePriority.Normal, utxos.length, 2);
+// Calculate minimum fee
+const minFee = await client.calculateMinFee(wallet.address);
 
 // Build transaction
 const builder = new HoosatTxBuilder();
@@ -146,7 +143,7 @@ for (const utxo of utxos) {
 
 builder
   .addOutput(recipientAddress, HoosatUtils.amountToSompi('1.0'))
-  .setFee(fee.totalFee)
+  .setFee(minFee)
   .addChangeOutput(wallet.address);
 
 // Sign and submit
@@ -221,13 +218,8 @@ async function sendTransactionSafely(
     throw new Error('Insufficient balance');
   }
 
-  // 4. Estimate fee
-  const feeEstimator = new HoosatFeeEstimator(client);
-  const fee = await feeEstimator.estimateFee(
-    FeePriority.Normal,
-    utxos.length,
-    2
-  );
+  // 4. Calculate minimum fee
+  const minFee = await client.calculateMinFee(wallet.address);
 
   // 5. Build transaction
   const builder = new HoosatTxBuilder();
@@ -238,7 +230,7 @@ async function sendTransactionSafely(
 
   builder
     .addOutput(recipientAddress, amount)
-    .setFee(fee.totalFee)
+    .setFee(minFee)
     .addChangeOutput(wallet.address);
 
   // 6. Sign and submit
@@ -328,15 +320,13 @@ async function sendBatchPayments(
       builder.addOutput(payment.address, payment.amount);
     }
 
-    // Fee and change
-    const feeEstimator = new HoosatFeeEstimator(client);
-    const fee = await feeEstimator.estimateFee(
-      FeePriority.Normal,
+    // Calculate minimum fee and add change
+    const minFee = HoosatCrypto.calculateMinFee(
       utxos.length,
       batch.length + 1
     );
 
-    builder.setFee(fee.totalFee).addChangeOutput(wallet.address);
+    builder.setFee(minFee).addChangeOutput(wallet.address);
 
     // Submit
     const signedTx = builder.sign();

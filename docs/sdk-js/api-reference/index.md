@@ -72,23 +72,24 @@ builder
 const signedTx = builder.sign();
 ```
 
-### [HoosatFeeEstimator](./fee-estimator.md)
+### [Fee Calculation](./fee-estimator.md)
 
-Dynamic fee estimation based on network conditions.
+Automatic minimum fee calculation using MASS-based formula.
 
 **Key Features:**
-- Real-time network analysis
-- Four priority levels (Low, Normal, High, Urgent)
-- Mempool-based recommendations
-- Intelligent caching
-- Mass-based calculation
+- Automatic fee calculation via `client.calculateMinFee()`
+- Manual calculation via `HoosatCrypto.calculateMinFee()`
+- MASS-based formula (HTND compatible)
+- Payload size support
+- No dynamic fee estimation
 
 **Quick Example:**
 ```typescript
-const estimator = new HoosatFeeEstimator(client);
+// Automatic (recommended)
+const minFee = await client.calculateMinFee(wallet.address);
 
-const fee = await estimator.estimateFee(
-  FeePriority.Normal,
+// Or manual
+const minFee = HoosatCrypto.calculateMinFee(
   2,  // inputs
   2   // outputs
 );
@@ -251,42 +252,32 @@ interface BlockAddedNotification {
 }
 ```
 
-### Fee Estimation
+### Fee Calculation
+
+The SDK uses MASS-based minimum fee calculation:
 
 ```typescript
-enum FeePriority {
-  Low = 'low',
-  Normal = 'normal',
-  High = 'high',
-  Urgent = 'urgent'
-}
+// Automatic fee calculation
+const minFee: string = await client.calculateMinFee(
+  address: string,
+  payloadSize?: number
+);
 
-interface FeeEstimate {
-  feeRate: number;
-  totalFee: string;
-  priority: FeePriority;
-}
-
-interface FeeRecommendations {
-  low: FeeEstimate;
-  normal: FeeEstimate;
-  high: FeeEstimate;
-  urgent: FeeEstimate;
-  mempoolSize: number;
-  timestamp: number;
-  medianFeeRate: number;
-  averageFeeRate: number;
-}
+// Manual fee calculation
+const minFee: string = HoosatCrypto.calculateMinFee(
+  inputsCount: number,
+  outputsCount: number,
+  payloadSize?: number
+);
 ```
 
 ## Module Comparison
 
 | Module | Purpose | Common Use Cases |
 |--------|---------|------------------|
-| **HoosatClient** | Blockchain queries | Check balance, get UTXOs, submit transactions |
-| **HoosatCrypto** | Key management | Generate wallets, sign transactions, hash data |
+| **HoosatClient** | Blockchain queries | Check balance, get UTXOs, submit transactions, calculate fees |
+| **HoosatCrypto** | Key management | Generate wallets, sign transactions, calculate fees, hash data |
 | **HoosatTxBuilder** | Build transactions | Send payments, consolidate UTXOs, batch transfers |
-| **HoosatFeeEstimator** | Fee calculation | Determine optimal fees, network analysis |
 | **HoosatUtils** | Validation & conversion | Validate addresses, convert amounts, format data |
 | **HoosatEventManager** | Real-time monitoring | Track balance changes, monitor blocks |
 | **HoosatQR** | Payment requests | Generate QR codes, handle payment URIs |
@@ -319,9 +310,7 @@ import {
   HoosatClient,
   HoosatCrypto,
   HoosatTxBuilder,
-  HoosatFeeEstimator,
-  HoosatUtils,
-  FeePriority
+  HoosatUtils
 } from 'hoosat-sdk';
 
 const client = new HoosatClient({ host: '54.38.176.95', port: 42420 });
@@ -331,9 +320,8 @@ const wallet = HoosatCrypto.importKeyPair(process.env.WALLET_PRIVATE_KEY!);
 const utxosResult = await client.getUtxosByAddresses([wallet.address]);
 const utxos = utxosResult.result.utxos;
 
-// Estimate fee
-const feeEstimator = new HoosatFeeEstimator(client);
-const fee = await feeEstimator.estimateFee(FeePriority.Normal, utxos.length, 2);
+// Calculate minimum fee
+const minFee = await client.calculateMinFee(wallet.address);
 
 // Build and sign transaction
 const builder = new HoosatTxBuilder();
@@ -344,7 +332,7 @@ for (const utxo of utxos) {
 
 builder
   .addOutput(recipientAddress, HoosatUtils.amountToSompi('1.0'))
-  .setFee(fee.totalFee)
+  .setFee(minFee)
   .addChangeOutput(wallet.address);
 
 const signedTx = builder.sign();

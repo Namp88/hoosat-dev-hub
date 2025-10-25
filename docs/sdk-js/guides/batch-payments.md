@@ -30,9 +30,7 @@ import {
   HoosatClient,
   HoosatCrypto,
   HoosatTxBuilder,
-  HoosatFeeEstimator,
-  HoosatUtils,
-  FeePriority
+  HoosatUtils
 } from 'hoosat-sdk';
 
 interface Payment {
@@ -70,7 +68,6 @@ async function sendToThreeRecipients() {
   const utxosResult = await client.getUtxosByAddresses([wallet.address]);
   let availableUtxos = utxosResult.result.utxos;
 
-  const feeEstimator = new HoosatFeeEstimator(client);
   const txIds: string[] = [];
 
   // Transaction 1: Recipients 1 & 2
@@ -90,14 +87,13 @@ async function sendToThreeRecipients() {
       builder.addOutput(payment.address, payment.amount);
     }
 
-    // Fee and change
-    const fee = await feeEstimator.estimateFee(
-      FeePriority.Normal,
+    // Calculate minimum fee and add change
+    const minFee = HoosatCrypto.calculateMinFee(
       availableUtxos.length,
       3  // 2 recipients + 1 change
     );
 
-    builder.setFee(fee.totalFee);
+    builder.setFee(minFee);
     builder.addChangeOutput(wallet.address);
 
     // Submit
@@ -134,14 +130,13 @@ async function sendToThreeRecipients() {
       builder.addOutput(payment.address, payment.amount);
     }
 
-    // Fee and change
-    const fee = await feeEstimator.estimateFee(
-      FeePriority.Normal,
+    // Calculate minimum fee and add change
+    const minFee = HoosatCrypto.calculateMinFee(
       availableUtxos.length,
       2  // 1 recipient + 1 change
     );
 
-    builder.setFee(fee.totalFee);
+    builder.setFee(minFee);
     builder.addChangeOutput(wallet.address);
 
     // Submit
@@ -173,13 +168,11 @@ async function sendToThreeRecipients() {
 class BatchPaymentProcessor {
   private client: HoosatClient;
   private wallet: KeyPair;
-  private feeEstimator: HoosatFeeEstimator;
   private batchSize: number = 2;  // Max recipients per tx
 
   constructor(client: HoosatClient, wallet: KeyPair) {
     this.client = client;
     this.wallet = wallet;
-    this.feeEstimator = new HoosatFeeEstimator(client);
   }
 
   async sendBatch(payments: Payment[]): Promise<BatchResult> {
@@ -325,14 +318,13 @@ class BatchPaymentProcessor {
       builder.addOutput(payment.address, payment.amount);
     }
 
-    // Estimate fee
-    const feeEstimate = await this.feeEstimator.estimateFee(
-      FeePriority.Normal,
+    // Calculate minimum fee
+    const minFee = HoosatCrypto.calculateMinFee(
       utxos.length,
       payments.length + 1  // recipients + change
     );
 
-    builder.setFee(feeEstimate.totalFee);
+    builder.setFee(minFee);
     builder.addChangeOutput(this.wallet.address);
 
     // Submit

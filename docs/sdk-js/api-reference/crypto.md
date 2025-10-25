@@ -160,43 +160,59 @@ const txId = HoosatCrypto.getTransactionId(signedTransaction);
 console.log('Transaction ID:', txId);
 ```
 
-### `calculateFee(inputsCount: number, outputsCount: number, feeRate?: number)`
+### `calculateMinFee(inputsCount: number, outputsCount: number, payloadSize?: number)`
 
-Calculate transaction fee based on mass.
+Calculate minimum transaction fee using MASS-based formula.
 
 **Parameters:**
 - `inputsCount` - Number of inputs
 - `outputsCount` - Number of outputs
-- `feeRate` - Fee rate in sompi per byte (default: 1)
+- `payloadSize` - Optional payload size in bytes (default: 0)
 
-**Returns:** `string` - Fee amount in sompi
+**Returns:** `string` - Minimum fee in sompi
 
-**Example:**
+**Examples:**
 ```typescript
-// Calculate fee for 2 inputs, 2 outputs at 10 sompi/byte
-const fee = HoosatCrypto.calculateFee(2, 2, 10);
-console.log('Fee:', fee, 'sompi');
+// Calculate minimum fee for 2 inputs, 2 outputs
+const minFee = HoosatCrypto.calculateMinFee(2, 2);
+console.log('Min fee:', minFee, 'sompi');
 
-// Use with dynamic fee estimation
-const feeEstimator = new HoosatFeeEstimator(client);
-const estimate = await feeEstimator.estimateFee(
-  FeePriority.Normal,
-  2,  // inputs
-  2   // outputs
-);
-
-const fee = HoosatCrypto.calculateFee(
-  2,
-  2,
-  estimate.feeRate
-);
+// With payload (future subnetwork usage)
+const payloadSize = 256; // 256 bytes
+const minFeeWithPayload = HoosatCrypto.calculateMinFee(2, 2, payloadSize);
 ```
 
-**Formula:**
+**Use with transaction builder:**
+```typescript
+// Manual fee calculation
+const minFee = HoosatCrypto.calculateMinFee(5, 2);
+builder.setFee(minFee);
+
+// Or automatic (recommended)
+const minFee = await client.calculateMinFee(wallet.address);
+builder.setFee(minFee);
 ```
-Mass = (inputs × 1700) + (outputs × 1700) + 10
-Fee = Mass × feeRate
+
+**MASS-based formula:**
+```typescript
+// 1. Transaction size
+txSize = baseTxOverhead + (inputs × inputSize) + (outputs × outputSize)
+
+// 2. Script size
+scriptPubKeySize = outputs × scriptPubKeyBytesPerOutput
+
+// 3. Mass components
+massForSize = txSize × massPerTxByte
+massForScriptPubKey = scriptPubKeySize × massPerScriptPubKeyByte
+massForSigOps = inputs × massPerSigOp
+massForPayload = payloadSize × massPerTxByte
+
+// 4. Total fee
+totalMass = massForSize + massForScriptPubKey + massForSigOps + massForPayload
+fee = totalMass
 ```
+
+See [Fee Calculation Guide](./fee-estimator.md) for detailed explanation.
 
 ## Hashing
 

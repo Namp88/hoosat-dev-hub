@@ -2,310 +2,233 @@
 sidebar_position: 4
 ---
 
-# HoosatFeeEstimator API Reference
+# Fee Calculation API Reference
 
-Dynamic fee estimation based on real-time network conditions.
+Automatic minimum fee calculation based on transaction requirements.
 
 ## Overview
 
-`HoosatFeeEstimator` analyzes the mempool to provide optimal fee recommendations:
-- Network-aware fee calculation
-- Four priority levels (Low, Normal, High, Urgent)
-- Intelligent caching
-- Outlier filtering
-- Mass-based fee calculation
+The SDK provides two ways to calculate transaction fees:
 
-## Constructor
+1. **Automatic** - `client.calculateMinFee()` - Automatically fetches UTXOs and calculates minimum fee
+2. **Manual** - `HoosatCrypto.calculateMinFee()` - Calculate fee when you know inputs/outputs count
 
-### `new HoosatFeeEstimator(client: HoosatClient, config?: FeeEstimatorConfig)`
+Both methods use **MASS-based fee calculation** compatible with HTND node implementation.
 
-Create a new fee estimator.
+## Automatic Fee Calculation
+
+### `client.calculateMinFee(address: string, payloadSize?: number)`
+
+Automatically calculate minimum fee for an address by fetching its UTXOs.
 
 **Parameters:**
-```typescript
-interface FeeEstimatorConfig {
-  cacheDuration?: number;  // Cache duration in ms (default: 60000 - 1 minute)
-  debug?: boolean;         // Enable debug logging (default: false)
-}
-```
+- `address` - Sender address
+- `payloadSize` - Optional payload size in bytes (default: 0, for future subnetwork usage)
+
+**Returns:** `Promise<string>` - Minimum fee in sompi
+
+**How it works:**
+1. Fetches UTXOs for the sender address
+2. Counts inputs (number of UTXOs)
+3. Assumes 2 outputs (recipient + change)
+4. Calculates minimum fee using MASS-based formula
+5. Returns fee in sompi as string
 
 **Example:**
 ```typescript
-const estimator = new HoosatFeeEstimator(client, {
-  cacheDuration: 30000,  // 30 seconds
-  debug: true
+import { HoosatClient, HoosatUtils } from 'hoosat-sdk';
+
+const client = new HoosatClient({
+  host: '54.38.176.95',
+  port: 42420
 });
-```
 
-## Fee Estimation
-
-### `estimateFee(priority: FeePriority, inputsCount: number, outputsCount: number)`
-
-Estimate fee for a specific transaction.
-
-**Parameters:**
-- `priority` - Fee priority level
-- `inputsCount` - Number of transaction inputs
-- `outputsCount` - Number of transaction outputs
-
-**Returns:** `Promise<FeeEstimate>`
-
-```typescript
-interface FeeEstimate {
-  feeRate: number;      // Sompi per byte
-  totalFee: string;     // Total fee in sompi
-  priority: FeePriority;
-}
-
-enum FeePriority {
-  Low = 'low',
-  Normal = 'normal',
-  High = 'high',
-  Urgent = 'urgent'
-}
-```
-
-**Example:**
-```typescript
-const feeEstimate = await estimator.estimateFee(
-  FeePriority.Normal,
-  2,  // inputs
-  2   // outputs (1 recipient + 1 change)
-);
-
-console.log('Fee rate:', feeEstimate.feeRate, 'sompi/byte');
-console.log('Total fee:', feeEstimate.totalFee, 'sompi');
-console.log('HTN:', HoosatUtils.sompiToAmount(feeEstimate.totalFee));
+// Automatic fee calculation
+const minFee = await client.calculateMinFee(wallet.address);
+console.log('Minimum fee:', minFee, 'sompi');
+console.log('HTN:', HoosatUtils.sompiToAmount(minFee));
 
 // Use with transaction builder
-builder.setFee(feeEstimate.totalFee);
+builder.setFee(minFee);
 ```
 
-### `getRecommendations(forceRefresh?: boolean)`
+**With payload (future use):**
+```typescript
+// Calculate fee for transaction with payload
+const payloadSize = 256; // 256 bytes
+const minFee = await client.calculateMinFee(wallet.address, payloadSize);
+```
 
-Get fee recommendations for all priority levels.
+## Manual Fee Calculation
+
+### `HoosatCrypto.calculateMinFee(inputsCount: number, outputsCount: number, payloadSize?: number)`
+
+Calculate minimum fee when you know the exact transaction structure.
 
 **Parameters:**
-- `forceRefresh` - Bypass cache and fetch fresh data (default: false)
+- `inputsCount` - Number of transaction inputs
+- `outputsCount` - Number of transaction outputs
+- `payloadSize` - Optional payload size in bytes (default: 0)
 
-**Returns:** `Promise<FeeRecommendations>`
-
-```typescript
-interface FeeRecommendations {
-  low: FeeEstimate;
-  normal: FeeEstimate;
-  high: FeeEstimate;
-  urgent: FeeEstimate;
-  mempoolSize: number;
-  timestamp: number;
-  medianFeeRate: number;
-  averageFeeRate: number;
-}
-```
+**Returns:** `string` - Minimum fee in sompi
 
 **Example:**
 ```typescript
-const recs = await estimator.getRecommendations();
+import { HoosatCrypto, HoosatUtils } from 'hoosat-sdk';
 
-console.log('Mempool size:', recs.mempoolSize, 'transactions');
-console.log('Median fee rate:', recs.medianFeeRate, 'sompi/byte');
-console.log('Average fee rate:', recs.averageFeeRate, 'sompi/byte');
-console.log();
+// Manual calculation
+const inputsCount = 5;
+const outputsCount = 2; // recipient + change
+const minFee = HoosatCrypto.calculateMinFee(inputsCount, outputsCount);
 
-console.log('Fee Recommendations:');
-console.log('Low:', recs.low.feeRate, 'sompi/byte');
-console.log('Normal:', recs.normal.feeRate, 'sompi/byte');
-console.log('High:', recs.high.feeRate, 'sompi/byte');
-console.log('Urgent:', recs.urgent.feeRate, 'sompi/byte');
+console.log('Minimum fee:', minFee, 'sompi');
+console.log('HTN:', HoosatUtils.sompiToAmount(minFee));
 
-// Let user choose priority
-const selectedPriority = userChoice; // 'low', 'normal', 'high', 'urgent'
-const fee = recs[selectedPriority];
+// Use with transaction builder
+builder.setFee(minFee);
 ```
 
-## Priority Levels
-
-### Low Priority (0.5x multiplier)
-
-**Use for:**
-- Non-urgent transactions
-- UTXO consolidation
-- Transactions with no time constraints
-- Cost optimization
-
-**Characteristics:**
-- Lowest fee
-- Slower confirmation (may take several blocks)
-- Good for maintenance operations
-
-**Example:**
+**With payload:**
 ```typescript
-const fee = await estimator.estimateFee(FeePriority.Low, inputs, outputs);
+const payloadSize = 128; // 128 bytes
+const minFee = HoosatCrypto.calculateMinFee(5, 2, payloadSize);
 ```
 
-### Normal Priority (1.0x multiplier)
-
-**Use for:**
-- Standard transactions
-- Most common use case
-- Regular payments
-- Default choice
-
-**Characteristics:**
-- Balanced fee/speed
-- Usually confirms within 1-2 blocks
-- Recommended for most transactions
-
-**Example:**
-```typescript
-const fee = await estimator.estimateFee(FeePriority.Normal, inputs, outputs);
-```
-
-### High Priority (2.0x multiplier)
-
-**Use for:**
-- Time-sensitive payments
-- Exchange withdrawals
-- Important transactions
-
-**Characteristics:**
-- Higher fee
-- Faster confirmation
-- Priority in mempool
-
-**Example:**
-```typescript
-const fee = await estimator.estimateFee(FeePriority.High, inputs, outputs);
-```
-
-### Urgent Priority (5.0x multiplier)
-
-**Use for:**
-- Critical transactions
-- Emergency payments
-- Network congestion
-
-**Characteristics:**
-- Highest fee
-- Fastest confirmation
-- Top priority
-
-**Example:**
-```typescript
-const fee = await estimator.estimateFee(FeePriority.Urgent, inputs, outputs);
-```
-
-## Cache Management
-
-### `clearCache()`
-
-Clear the fee recommendations cache.
-
-**Returns:** `void`
-
-**Example:**
-```typescript
-estimator.clearCache();
-
-// Next call will fetch fresh data
-const recs = await estimator.getRecommendations();
-```
-
-### `setCacheDuration(duration: number)`
-
-Update cache duration.
-
-**Parameters:**
-- `duration` - Cache duration in milliseconds
-
-**Returns:** `void`
-
-**Example:**
-```typescript
-// Cache for 2 minutes
-estimator.setCacheDuration(120000);
-```
-
-## Fee Calculation
+## MASS-Based Fee Formula
 
 ### How It Works
 
-1. **Fetch mempool data** - Get all pending transactions
-2. **Extract fee rates** - Calculate fee/mass for each transaction
-3. **Remove outliers** - Filter using IQR (Interquartile Range) method
-4. **Calculate median** - Base fee rate from cleaned data
-5. **Apply multipliers** - Generate priority-based rates
-6. **Calculate total** - Multiply by transaction mass
+The fee calculation uses a MASS-based formula that accounts for:
 
-### Transaction Mass Formula
+1. **Transaction size** - Inputs and outputs count
+2. **Script complexity** - Script public key size
+3. **Signature operations** - Number of signature verifications
+4. **Payload data** - Optional additional data
+
+### Formula Components
+
+```typescript
+// 1. Calculate full transaction size
+txSize = baseTxOverhead + (inputs × inputSize) + (outputs × outputSize)
+
+// 2. Calculate script-only size
+scriptPubKeySize = outputs × scriptPubKeyBytesPerOutput
+
+// 3. Calculate mass components
+massForSize = txSize × massPerTxByte
+massForScriptPubKey = scriptPubKeySize × massPerScriptPubKeyByte
+massForSigOps = inputs × massPerSigOp
+massForPayload = payloadSize × massPerTxByte
+
+// 4. Total mass
+totalMass = massForSize + massForScriptPubKey + massForSigOps + massForPayload
+
+// 5. Fee = totalMass (minimumRelayTxFee = 1)
+fee = totalMass
+```
+
+### Example Calculation
 
 ```
-Mass = (inputs × 1700) + (outputs × 1700) + 10
-```
-
-**Example calculation:**
-```
-Inputs: 2
+Inputs: 5
 Outputs: 2
-Mass = (2 × 1700) + (2 × 1700) + 10 = 6810
+Payload: 0 bytes
 
-Fee rate: 10 sompi/byte
-Total fee = 6810 × 10 = 68,100 sompi
+Step 1: Transaction size
+  baseTxOverhead = 0
+  inputSize = 181 bytes
+  outputSize = 34 bytes
+  txSize = 0 + (5 × 181) + (2 × 34) = 973 bytes
+
+Step 2: Script size
+  scriptPubKeyBytesPerOutput = 34
+  scriptPubKeySize = 2 × 34 = 68 bytes
+
+Step 3: Mass components
+  massForSize = 973 × 1 = 973
+  massForScriptPubKey = 68 × 10 = 680
+  massForSigOps = 5 × 1000 = 5000
+  massForPayload = 0 × 1 = 0
+
+Step 4: Total mass
+  totalMass = 973 + 680 + 5000 + 0 = 6653
+
+Step 5: Fee
+  fee = 6653 sompi (~0.000067 HTN)
 ```
 
-### Fallback Strategy
+### Why MASS-Based?
 
-When mempool is empty or data is insufficient:
+1. **Accounts for actual transaction weight** - Not just byte size
+2. **Prevents spam** - Expensive to create many small outputs
+3. **Fair pricing** - Based on resource usage (storage, computation, bandwidth)
+4. **HTND compatible** - Uses same formula as node implementation
 
-```typescript
-// Default fee rates (sompi/byte)
-const FALLBACK_FEE_RATES = {
-  low: 1,
-  normal: 10,
-  high: 20,
-  urgent: 50
-};
-```
+## Fee Comparison Examples
 
-## Network Conditions
-
-### Detecting Congestion
+### Different Transaction Sizes
 
 ```typescript
-const recs = await estimator.getRecommendations();
+import { HoosatCrypto, HoosatUtils } from 'hoosat-sdk';
 
-if (recs.mempoolSize > 100) {
-  console.log('Network is congested');
-  console.log('Consider using higher priority');
+const scenarios = [
+  { name: 'Simple (1→1)', inputs: 1, outputs: 1 },
+  { name: 'Standard (1→2)', inputs: 1, outputs: 2 },
+  { name: 'Batch Pay (2→2)', inputs: 2, outputs: 2 },
+  { name: 'Consolidate (5→1)', inputs: 5, outputs: 1 },
+  { name: 'Large (10→2)', inputs: 10, outputs: 2 },
+  { name: 'Very Large (20→2)', inputs: 20, outputs: 2 }
+];
 
-  // Automatically adjust
-  const priority = recs.mempoolSize > 200
-    ? FeePriority.High
-    : FeePriority.Normal;
+console.log('Type               | Fee (sompi) | Fee (HTN)');
+console.log('-------------------|-------------|-------------');
 
-  const fee = await estimator.estimateFee(priority, inputs, outputs);
+for (const scenario of scenarios) {
+  const fee = HoosatCrypto.calculateMinFee(scenario.inputs, scenario.outputs);
+  const feeHTN = HoosatUtils.sompiToAmount(fee);
+
+  console.log(`${scenario.name.padEnd(18)} | ${fee.padStart(11)} | ${feeHTN.padStart(11)}`);
 }
 ```
 
-### Optimal Fee Selection
+**Output:**
+```
+Type               | Fee (sompi) | Fee (HTN)
+-------------------|-------------|-------------
+Simple (1→1)       |        1344 | 0.00001344
+Standard (1→2)     |        1681 | 0.00001681
+Batch Pay (2→2)    |        3362 | 0.00003362
+Consolidate (5→1)  |        6310 | 0.00006310
+Large (10→2)       |       11681 | 0.00011681
+Very Large (20→2)  |       22371 | 0.00022371
+```
+
+### With Payload
 
 ```typescript
-async function selectOptimalFee(inputsCount: number, outputsCount: number) {
-  const recs = await estimator.getRecommendations();
+const payloadSizes = [0, 64, 128, 256, 512];
 
-  // Choose based on mempool size
-  let priority: FeePriority;
+console.log('Standard transaction (5 inputs, 2 outputs):');
+console.log('Payload Size | Fee (sompi) | Fee (HTN)');
+console.log('-------------|-------------|-------------');
 
-  if (recs.mempoolSize < 50) {
-    priority = FeePriority.Low;  // Network is quiet
-  } else if (recs.mempoolSize < 150) {
-    priority = FeePriority.Normal;  // Normal activity
-  } else {
-    priority = FeePriority.High;  // Congested
-  }
+for (const payloadSize of payloadSizes) {
+  const fee = HoosatCrypto.calculateMinFee(5, 2, payloadSize);
+  const feeHTN = HoosatUtils.sompiToAmount(fee);
 
-  return estimator.estimateFee(priority, inputsCount, outputsCount);
+  console.log(`${payloadSize.toString().padStart(12)} | ${fee.padStart(11)} | ${feeHTN.padStart(11)}`);
 }
+```
+
+**Output:**
+```
+Payload Size | Fee (sompi) | Fee (HTN)
+-------------|-------------|-------------
+           0 |        6653 | 0.00006653
+          64 |        6717 | 0.00006717
+         128 |        6781 | 0.00006781
+         256 |        6909 | 0.00006909
+         512 |        7165 | 0.00007165
 ```
 
 ## Complete Example
@@ -313,127 +236,195 @@ async function selectOptimalFee(inputsCount: number, outputsCount: number) {
 ```typescript
 import {
   HoosatClient,
-  HoosatFeeEstimator,
-  FeePriority,
+  HoosatCrypto,
+  HoosatTxBuilder,
   HoosatUtils
 } from 'hoosat-sdk';
 
-async function demonstrateFeeEstimation() {
+async function sendTransaction() {
   const client = new HoosatClient({
     host: '54.38.176.95',
     port: 42420
   });
 
-  // Create estimator with 30-second cache
-  const estimator = new HoosatFeeEstimator(client, {
-    cacheDuration: 30000
-  });
+  // Method 1: Automatic fee calculation
+  console.log('Method 1: Automatic');
+  const minFee = await client.calculateMinFee(wallet.address);
+  console.log('Min fee:', minFee, 'sompi');
+  console.log('HTN:', HoosatUtils.sompiToAmount(minFee), '\n');
 
-  // Get all recommendations
-  console.log('Fetching fee recommendations...\n');
-  const recs = await estimator.getRecommendations();
+  // Method 2: Manual fee calculation
+  console.log('Method 2: Manual');
+  const utxosResult = await client.getUtxosByAddresses([wallet.address]);
+  const utxos = utxosResult.result.utxos;
 
-  console.log('Network Status:');
-  console.log(`Mempool: ${recs.mempoolSize} transactions`);
-  console.log(`Median fee: ${recs.medianFeeRate} sompi/byte`);
-  console.log(`Average fee: ${recs.averageFeeRate} sompi/byte`);
-  console.log();
+  const inputsCount = utxos.length;
+  const outputsCount = 2; // recipient + change
 
-  console.log('Recommended Fee Rates:');
-  console.log(`Low:    ${recs.low.feeRate} sompi/byte`);
-  console.log(`Normal: ${recs.normal.feeRate} sompi/byte`);
-  console.log(`High:   ${recs.high.feeRate} sompi/byte`);
-  console.log(`Urgent: ${recs.urgent.feeRate} sompi/byte`);
-  console.log();
+  const manualFee = HoosatCrypto.calculateMinFee(inputsCount, outputsCount);
+  console.log('Min fee:', manualFee, 'sompi');
+  console.log('HTN:', HoosatUtils.sompiToAmount(manualFee), '\n');
 
-  // Estimate for specific transaction
-  const inputsCount = 2;
-  const outputsCount = 2;
+  // Build transaction
+  const builder = new HoosatTxBuilder();
 
-  console.log(`Transaction: ${inputsCount} inputs, ${outputsCount} outputs\n`);
+  // Add inputs
+  for (const utxo of utxos) {
+    builder.addInput(utxo, wallet.privateKey);
+  }
 
-  for (const priority of ['low', 'normal', 'high', 'urgent'] as FeePriority[]) {
-    const estimate = await estimator.estimateFee(
-      priority,
-      inputsCount,
-      outputsCount
-    );
+  // Add recipient
+  builder.addOutput(recipientAddress, '100000000'); // 1 HTN
 
-    const htn = HoosatUtils.sompiToAmount(estimate.totalFee);
+  // Set fee and add change
+  builder.setFee(minFee);
+  builder.addChangeOutput(wallet.address);
 
-    console.log(`${priority.toUpperCase()}:`);
-    console.log(`  Fee: ${estimate.totalFee} sompi (${htn} HTN)`);
-    console.log(`  Rate: ${estimate.feeRate} sompi/byte`);
+  // Sign and submit
+  const signedTx = builder.sign();
+  const result = await client.submitTransaction(signedTx);
+
+  if (result.ok) {
+    console.log('Transaction submitted:', result.result.transactionId);
   }
 
   client.disconnect();
 }
-
-demonstrateFeeEstimation();
 ```
 
 ## Best Practices
 
-### 1. Cache Appropriately
+### 1. Always Calculate Fee Before Building Transaction
 
 ```typescript
-// Production: longer cache for cost savings
-const estimator = new HoosatFeeEstimator(client, {
-  cacheDuration: 60000  // 1 minute
-});
+// ❌ DON'T use static fees
+builder.setFee('1000');
 
-// Real-time apps: shorter cache
-const estimator = new HoosatFeeEstimator(client, {
-  cacheDuration: 10000  // 10 seconds
-});
+// ✅ DO calculate minimum fee
+const minFee = await client.calculateMinFee(wallet.address);
+builder.setFee(minFee);
 ```
 
-### 2. Handle Network Conditions
+### 2. Check Balance Includes Fee
 
 ```typescript
-const recs = await estimator.getRecommendations();
+const balance = await client.getBalance(wallet.address);
+const minFee = await client.calculateMinFee(wallet.address);
 
-if (recs.mempoolSize === 0) {
-  console.log('Mempool is empty - use minimum fee');
-  return FeePriority.Low;
+const totalRequired = BigInt(sendAmount) + BigInt(minFee);
+
+if (BigInt(balance.result.balance) < totalRequired) {
+  throw new Error('Insufficient funds including fee');
 }
-
-if (recs.mempoolSize > 200) {
-  console.log('High congestion - recommend high priority');
-  return FeePriority.High;
-}
-
-return FeePriority.Normal;
 ```
 
-### 3. Let Users Choose
+### 3. Account for Change Output
 
 ```typescript
-// Show options to users
-const recs = await estimator.getRecommendations();
-
-console.log('Fee options:');
-console.log(`Slow (${HoosatUtils.sompiToAmount(recs.low.totalFee)} HTN)`);
-console.log(`Normal (${HoosatUtils.sompiToAmount(recs.normal.totalFee)} HTN)`);
-console.log(`Fast (${HoosatUtils.sompiToAmount(recs.high.totalFee)} HTN)`);
-
-const choice = await getUserChoice();
+// Remember: outputs count includes change
+const outputsCount = 2; // 1 recipient + 1 change
+const minFee = HoosatCrypto.calculateMinFee(inputsCount, outputsCount);
 ```
 
-### 4. Monitor Mempool
+### 4. Use Automatic Calculation When Possible
 
 ```typescript
-// Periodically check network conditions
-setInterval(async () => {
-  const recs = await estimator.getRecommendations(true); // Force refresh
+// Simpler and less error-prone
+const minFee = await client.calculateMinFee(wallet.address);
 
-  if (recs.mempoolSize > threshold) {
-    notifyUser('Network congestion detected');
+// vs manual
+const utxos = await client.getUtxosByAddresses([wallet.address]);
+const minFee = HoosatCrypto.calculateMinFee(utxos.result.utxos.length, 2);
+```
+
+### 5. Consider Future Payload Usage
+
+```typescript
+// For future subnetwork transactions with payload
+const payloadData = Buffer.from('Hello Hoosat!', 'utf-8');
+const payloadSize = payloadData.length;
+
+const minFee = HoosatCrypto.calculateMinFee(
+  inputsCount,
+  outputsCount,
+  payloadSize
+);
+```
+
+## TransactionFeeService (Internal)
+
+The SDK uses `TransactionFeeService` internally for automatic fee calculation. You don't need to instantiate it directly - use `client.calculateMinFee()` instead.
+
+**Internal implementation:**
+```typescript
+class TransactionFeeService {
+  async calculateMinFee(address: string, payloadSize: number = 0): Promise<string> {
+    // 1. Validate address
+    if (!HoosatUtils.isValidAddress(address)) {
+      throw new Error(`Invalid address: ${address}`);
+    }
+
+    // 2. Fetch UTXOs
+    const utxosResult = await this._addressService.getUtxosByAddresses([address]);
+
+    if (!utxosResult.ok || !utxosResult.result) {
+      throw new Error('Failed to fetch UTXOs for address');
+    }
+
+    const utxos = utxosResult.result.utxos;
+
+    if (!utxos || utxos.length === 0) {
+      throw new Error('No UTXOs available for this address');
+    }
+
+    // 3. Calculate fee
+    const numInputs = utxos.length;
+    const numOutputs = 2; // recipient + change
+
+    return HoosatCrypto.calculateMinFee(numInputs, numOutputs, payloadSize);
   }
-}, 60000);  // Check every minute
+}
 ```
+
+## Migration from HoosatFeeEstimator
+
+If you're migrating from the old `HoosatFeeEstimator`:
+
+### Before (Old API)
+```typescript
+import { HoosatFeeEstimator, FeePriority } from 'hoosat-sdk';
+
+const estimator = new HoosatFeeEstimator(client);
+const recommendations = await estimator.getRecommendations();
+const feeRate = recommendations[FeePriority.Normal].feeRate;
+
+const fee = HoosatCrypto.calculateFee(inputsCount, outputsCount, feeRate);
+builder.setFee(fee);
+```
+
+### After (New API)
+```typescript
+import { HoosatCrypto } from 'hoosat-sdk';
+
+// Automatic
+const minFee = await client.calculateMinFee(wallet.address);
+builder.setFee(minFee);
+
+// Or manual
+const minFee = HoosatCrypto.calculateMinFee(inputsCount, outputsCount);
+builder.setFee(minFee);
+```
+
+**Key changes:**
+- ❌ No more `HoosatFeeEstimator`
+- ❌ No more `FeePriority` enum
+- ❌ No more dynamic fee rates
+- ✅ Simple minimum fee calculation
+- ✅ MASS-based formula
+- ✅ Automatic or manual calculation
 
 ## Next Steps
 
-- [HoosatTxBuilder](./tx-builder.md) - Use fees with transaction builder
-- [Transactions Guide](../guides/transactions.md) - Transaction building with fees
+- [HoosatCrypto](./crypto.md) - Cryptographic operations including fee calculation
+- [HoosatTxBuilder](./tx-builder.md) - Build transactions with calculated fees
+- [Transactions Guide](../guides/transactions.md) - Complete transaction building guide
