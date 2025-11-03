@@ -55,9 +55,7 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/icon128.png',
     colorMode: {
-      defaultMode: 'dark',
-      disableSwitch: false,
-      respectPrefersColorScheme: false,
+      respectPrefersColorScheme: true,
     },
     navbar: {
       title: 'Hoosat Dev Hub',
