@@ -12,8 +12,8 @@ sidebar_position: 1
 
 **NPM Package:** [hoosat-sdk-web](https://www.npmjs.com/package/hoosat-sdk-web)
 **GitHub:** [Namp88/hoosat-sdk-web](https://github.com/Namp88/hoosat-sdk-web)
-**Version:** 0.1.4
-**Size:** ~150KB gzipped
+**Version:** 0.1.6
+**Size:** ~180KB gzipped
 
 ## Key Differences from Node.js SDK
 
@@ -22,9 +22,11 @@ sidebar_position: 1
 | **Environment** | Browser only | Node.js only |
 | **Node Connection** | REST API (HTTP) | gRPC (native protocol) |
 | **Real-time Events** | Not supported | WebSocket/gRPC streams |
-| **Bundle Size** | ~150KB | ~2MB+ |
+| **Bundle Size** | ~180KB | ~2MB+ |
 | **Installation** | `npm install hoosat-sdk-web` | `npm install hoosat-sdk` |
 | **Use Cases** | Web wallets, dApps, extensions | Servers, exchanges, services |
+| **Payload Support** | ✓ Full support | ✓ Full support |
+| **API Providers** | ✓ Extensible multi-provider | Single node |
 
 ## Core Features
 
@@ -50,16 +52,33 @@ const signedTx = HoosatCrypto.signTransactionInput(tx, 0, wallet.privateKey, utx
 - Message signing for authentication
 - SHA256 and BLAKE3 hashing
 
-### REST API Client
+### REST API Client with Provider Architecture
 
-Connect to Hoosat nodes via REST API proxy:
+Connect to Hoosat nodes with extensible provider system (contributed by [@codecustard](https://github.com/codecustard)):
 
 ```typescript
-import { HoosatWebClient } from 'hoosat-sdk-web';
+import {
+  HoosatBrowserClient,
+  createHoosatProxyProvider,
+  createHoosatNetworkProvider,
+  createMultiProvider
+} from 'hoosat-sdk-web';
 
-const client = new HoosatWebClient({
+// Single provider
+const provider = createHoosatProxyProvider({
   baseUrl: 'https://proxy.hoosat.net/api/v1'
 });
+const client = new HoosatBrowserClient(provider);
+
+// Multi-provider with failover
+const multiProvider = createMultiProvider(
+  [
+    createHoosatProxyProvider(),
+    createHoosatNetworkProvider()
+  ],
+  'failover'
+);
+const resilientClient = new HoosatBrowserClient(multiProvider);
 
 // Check balance
 const balance = await client.getBalance('hoosat:qz7ulu...');
@@ -78,10 +97,16 @@ const result = await client.submitTransaction(signedTx);
 - Network information
 - Fee recommendations
 - Health checks
+- **Extensible provider system**
+- **Automatic failover**
+- **Load balancing**
+- **Performance optimization**
 
-### Transaction Builder
+[Learn more about API Providers →](./guides/api-providers.md)
 
-Build and sign transactions with automatic change calculation:
+### Transaction Builder with Payload Support
+
+Build and sign transactions with automatic change calculation and payload support:
 
 ```typescript
 import { HoosatTxBuilder, HoosatUtils } from 'hoosat-sdk-web';
@@ -93,10 +118,24 @@ utxos.utxos.forEach(utxo => {
   builder.addInput(utxo, wallet.privateKey);
 });
 
-// Add outputs
+// Build regular transaction
 builder
   .addOutput(recipientAddress, HoosatUtils.amountToSompi('1.0'))
   .setFee('2500')
+  .addChangeOutput(wallet.address);
+
+// Or build transaction with payload (for voting, data anchoring, etc.)
+const voteData = {
+  type: 'vote',
+  pollId: 'abc123',
+  optionIndex: 1
+};
+
+builder
+  .addOutput(voteServiceAddress, serviceFee)
+  .setSubnetworkId('0300000000000000000000000000000000000000')
+  .setPayload(HoosatUtils.encodePayloadAsJson(voteData))
+  .setFee(fee.toString())
   .addChangeOutput(wallet.address);
 
 // Sign
@@ -109,6 +148,10 @@ const signedTx = builder.sign();
 - Built-in validation
 - Spam protection compliance
 - Fee estimation
+- **Payload support (voting, data anchoring)**
+- **Subnetwork configuration**
+
+[Learn more about Payload Transactions →](./guides/payload-transactions.md)
 
 ### Message Signing
 
@@ -180,7 +223,7 @@ const parsed = HoosatQR.parsePaymentURI(uri);
 
 ### Utilities
 
-Helper functions for validation and conversion:
+Helper functions for validation, conversion, and payload encoding/decoding:
 
 ```typescript
 import { HoosatUtils } from 'hoosat-sdk-web';
@@ -199,7 +242,15 @@ const type = HoosatUtils.getAddressType(address); // 'ecdsa', 'schnorr', 'p2sh'
 
 // Formatting
 const short = HoosatUtils.truncateAddress(address, 10, 8); // 'hoosat:qz7...uch02'
+
+// Payload encoding/decoding
+const hex = HoosatUtils.encodePayloadAsJson({ type: 'vote', pollId: '123' });
+const data = HoosatUtils.parsePayloadAsJson(hex);
+const isJson = HoosatUtils.isJsonPayload(hex);
+const safe = HoosatUtils.decodePayloadSafe(hex);
 ```
+
+[Learn more about Payload Utilities →](./guides/payload-transactions.md)
 
 ## Installation
 
@@ -467,10 +518,37 @@ privateKey.fill(0);
 privateKey = null as any;
 ```
 
+## Latest Features
+
+### API Provider Architecture (v0.1.6)
+
+Extensible provider system with automatic failover and performance optimization:
+
+- **HoosatProxyProvider** - Official proxy endpoint
+- **HoosatNetworkProvider** - Community network endpoint
+- **MultiProvider** - Failover, fastest-response, round-robin strategies
+- **Custom providers** - Build your own providers
+
+[Read the API Provider Guide →](./guides/api-providers.md)
+
+### Payload Transactions (v0.1.6)
+
+Send structured data on-chain for voting, data anchoring, and application protocols:
+
+- **Payload encoding** - JSON and text to hex conversion
+- **Payload decoding** - Hex to JSON/text with validation
+- **Transaction builder** - setSubnetworkId(), setPayload() methods
+- **Fee calculation** - Payload size included in fees
+- **Real-world examples** - Vote service, data anchoring
+
+[Read the Payload Transactions Guide →](./guides/payload-transactions.md)
+
 ## Next Steps
 
 - [Installation](./getting-started/installation.md) - Detailed installation guide
 - [Quick Start](./getting-started/quick-start.md) - Build your first dApp
+- [API Providers](./guides/api-providers.md) - Resilient API connectivity
+- [Payload Transactions](./guides/payload-transactions.md) - On-chain data
 - [API Reference](./api-reference) - Complete API documentation
 - [Examples](./examples) - Working examples
-- [Guides](./guides/browser-wallet.md) - Integration guides
+- [Browser Wallet](./guides/browser-wallet.md) - Integration guides

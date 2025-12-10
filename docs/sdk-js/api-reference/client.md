@@ -171,6 +171,163 @@ Get DAG structure information.
 
 **Returns:** `Promise<BaseResult<GetBlockDagInfo>>`
 
+### `getBlockByTransactionId(txId: string)`
+
+Find the block containing a specific transaction.
+
+**Parameters:**
+- `txId` - Transaction ID (64-character hex string)
+
+**Returns:** `Promise<BaseResult<GetBlock | null>>`
+
+**Description:**
+Searches for the block that contains the specified transaction. This is useful for:
+- Confirming transaction inclusion in a block
+- Getting block metadata for a transaction (DAA score, timestamp, etc.)
+- Verifying transaction confirmations
+- Building block explorers and analytics tools
+
+**Requirements:**
+- Node must have `--utxoindex` enabled
+- Transaction must be confirmed (not in mempool)
+- Returns `null` if transaction not found
+
+**Examples:**
+```typescript
+// Find block for confirmed transaction
+const result = await client.getBlockByTransactionId(txId);
+
+if (result.ok && result.result) {
+  const block = result.result;
+  console.log('Transaction confirmed in block:');
+  console.log('  Block hash:', block.header.hash);
+  console.log('  DAA score:', block.header.blueScore);
+  console.log('  Timestamp:', new Date(parseInt(block.header.timestamp)));
+  console.log('  Transactions:', block.transactions.length);
+} else if (result.ok && result.result === null) {
+  console.log('Transaction not found in blockchain');
+} else {
+  console.error('Error:', result.error);
+}
+
+// Check transaction confirmations
+async function getConfirmations(txId: string): Promise<number> {
+  const blockResult = await client.getBlockByTransactionId(txId);
+
+  if (!blockResult.ok || !blockResult.result) {
+    return 0; // Not confirmed
+  }
+
+  const txBlock = blockResult.result;
+  const dagInfo = await client.getBlockDagInfo();
+
+  if (!dagInfo.ok) {
+    throw new Error('Failed to get DAG info');
+  }
+
+  const currentDaa = parseInt(dagInfo.result.virtualDaaScore);
+  const txDaa = parseInt(txBlock.header.blueScore);
+
+  return currentDaa - txDaa;
+}
+
+const confirmations = await getConfirmations(txId);
+console.log(`Transaction has ${confirmations} confirmations`);
+
+// Wait for transaction confirmation
+async function waitForConfirmation(
+  txId: string,
+  minConfirmations: number = 10,
+  pollInterval: number = 5000
+): Promise<void> {
+  console.log(`Waiting for ${minConfirmations} confirmations...`);
+
+  while (true) {
+    const confirmations = await getConfirmations(txId);
+
+    if (confirmations >= minConfirmations) {
+      console.log(`Transaction confirmed with ${confirmations} confirmations`);
+      return;
+    }
+
+    console.log(`Current confirmations: ${confirmations}/${minConfirmations}`);
+    await new Promise(resolve => setTimeout(resolve, pollInterval));
+  }
+}
+
+await waitForConfirmation(txId, 10);
+
+// Explorer: get transaction with block metadata
+async function getTransactionDetails(txId: string) {
+  const blockResult = await client.getBlockByTransactionId(txId);
+
+  if (!blockResult.ok || !blockResult.result) {
+    return null;
+  }
+
+  const block = blockResult.result;
+  const tx = block.transactions.find(t => t.verboseData?.transactionId === txId);
+
+  if (!tx) {
+    throw new Error('Transaction not found in block');
+  }
+
+  return {
+    transaction: tx,
+    block: {
+      hash: block.header.hash,
+      daaScore: block.header.blueScore,
+      timestamp: parseInt(block.header.timestamp),
+      size: block.header.version
+    },
+    confirmations: await getConfirmations(txId)
+  };
+}
+
+const details = await getTransactionDetails(txId);
+if (details) {
+  console.log('TX Details:', details);
+}
+```
+
+**Response format:**
+```typescript
+interface GetBlock {
+  header: {
+    hash: string;
+    version: number;
+    hashMerkleRoot: string;
+    acceptedIdMerkleRoot: string;
+    utxoCommitment: string;
+    timestamp: string;
+    bits: number;
+    nonce: string;
+    daaScore: string;
+    blueScore: string;
+    blueWork: string;
+    pruningPoint: string;
+    parentsByLevel: string[][];
+  };
+  transactions: Transaction[];
+  verboseData: {
+    hash: string;
+    difficulty: number;
+    selectedParentHash: string;
+    transactionIds: string[];
+    isChainBlock: boolean;
+  };
+}
+```
+
+**Use cases:**
+- Transaction confirmation tracking
+- Block explorer transaction pages
+- Analytics and reporting
+- Payment verification systems
+- Wallet transaction history with block data
+
+**Note:** This method is more efficient than iterating through blocks manually. It uses the UTXO index to quickly locate the block.
+
 ## Balance & UTXOs
 
 ### `getBalance(address: string)`

@@ -923,7 +923,642 @@ const { mature, immature } = HoosatUtils.separateMatureUtxos(utxos, currentDaa);
 const spendable = HoosatUtils.filterMatureUtxos(utxos, currentDaa);
 ```
 
+## Payload Encoding and Decoding
+
+Hoosat blockchain supports arbitrary data payloads in transactions through **subnetwork 0x03**. This feature enables applications like voting systems, data anchoring, and mining pool worker identification. The HoosatUtils class provides comprehensive methods for encoding, decoding, and validating transaction payloads.
+
+### Overview
+
+Transaction payloads can contain:
+- **JSON data** - Structured application data (votes, polls, metadata)
+- **Binary data** - Mining data, hashes, signatures
+- **UTF-8 text** - Messages, notes, identifiers
+
+All payloads must be hex-encoded for blockchain storage. Common use cases:
+- **Vote service**: Poll creation and vote casting with JSON metadata
+- **Mining pools**: Worker identification and stratum bridge data
+- **Data anchoring**: Timestamped document hashes
+- **Application protocols**: Custom dApp communication
+
+### `decodePayload(hexPayload: string)`
+
+Decode hex-encoded payload to UTF-8 string.
+
+**Parameters:**
+- `hexPayload` - Hex-encoded payload string (optional '0x' prefix)
+
+**Returns:** `string` - Decoded UTF-8 text
+
+**Throws:**
+- Error if hex format invalid
+- Does not validate UTF-8 (use `decodePayloadSafe` for validation)
+
+**Examples:**
+```typescript
+import { HoosatUtils } from 'hoosat-sdk';
+
+// Simple text payload
+const hex = '48656c6c6f20576f726c64';
+const text = HoosatUtils.decodePayload(hex);
+console.log(text); // "Hello World"
+
+// With 0x prefix
+const hex2 = '0x48656c6c6f';
+const text2 = HoosatUtils.decodePayload(hex2);
+console.log(text2); // "Hello"
+
+// Mining pool worker identification
+const miningPayload = '52721f0600000000897f55610000000000002220a4f6ba3e...';
+const decoded = HoosatUtils.decodePayload(miningPayload);
+// Contains: "1.6.2/'hoo_gpu/1.2.12' via htn-stratum-bridge_v1.6.0 as worker RIG02"
+```
+
+**Use cases:**
+- Display transaction payload in explorer
+- Extract mining pool worker ID from coinbase
+- Read application-specific metadata
+- Debug payload content
+
+### `parsePayloadAsJson<T>(hexPayload: string)`
+
+Decode hex payload and parse as JSON.
+
+**Type Parameters:**
+- `T` - Expected JSON structure type (optional)
+
+**Parameters:**
+- `hexPayload` - Hex-encoded JSON payload
+
+**Returns:** `T` - Parsed JSON object
+
+**Throws:**
+- Error if hex format invalid
+- Error if payload is not valid JSON
+- Error if JSON parsing fails
+
+**Examples:**
+```typescript
+// Vote transaction payload
+const voteHex = '7b2274797065223a22766f7465222c22706f6c6c4964223a22313233227d';
+const voteData = HoosatUtils.parsePayloadAsJson(voteHex);
+console.log(voteData);
+// { type: 'vote', pollId: '123' }
+
+// Poll creation with typed interface
+interface PollCreatePayload {
+  type: 'poll_create';
+  v: number;
+  title: string;
+  description: string;
+  options: string[];
+  startDate: number;
+  endDate: number;
+  votingType: 'single' | 'multiple';
+  votingMode: 'standard' | 'weighted';
+  category: string;
+  minBalance: number;
+}
+
+const pollHex = '7b2274797065223a22706f6c6c5f637265617465222c2276223a312c227469746c65223a225375706572207075707065722...';
+const poll = HoosatUtils.parsePayloadAsJson<PollCreatePayload>(pollHex);
+
+console.log(`Poll: ${poll.title}`);
+console.log(`Options: ${poll.options.join(', ')}`);
+console.log(`Voting period: ${new Date(poll.startDate)} - ${new Date(poll.endDate)}`);
+console.log(`Min balance: ${poll.minBalance} HTN`);
+
+// Application metadata
+interface AppMetadata {
+  version: string;
+  action: string;
+  timestamp: number;
+  data: Record<string, unknown>;
+}
+
+const metaHex = '7b2276657273696f6e223a22312e30222c22616374696f6e223a227570646174652...';
+const metadata = HoosatUtils.parsePayloadAsJson<AppMetadata>(metaHex);
+```
+
+**Use cases:**
+- Parse vote service transactions
+- Extract structured application data
+- Validate protocol messages
+- Process dApp events
+
+### `encodePayload(text: string)`
+
+Encode UTF-8 text to hex payload.
+
+**Parameters:**
+- `text` - UTF-8 string to encode
+
+**Returns:** `string` - Hex-encoded payload (lowercase, no prefix)
+
+**Examples:**
+```typescript
+// Simple text
+const hex = HoosatUtils.encodePayload('Hello World');
+console.log(hex); // "48656c6c6f20576f726c64"
+
+// Mining worker ID
+const workerHex = HoosatUtils.encodePayload('worker_gpu_01');
+
+// Use with transaction builder
+import { HoosatTxBuilder } from 'hoosat-sdk';
+
+const builder = new HoosatTxBuilder();
+builder
+  .addInput(utxo, wallet.privateKey)
+  .addOutput(recipient, amount)
+  .setSubnetworkId('0300000000000000000000000000000000000000')
+  .setPayload(HoosatUtils.encodePayload('Transaction memo'))
+  .addChangeOutput(wallet.address);
+
+const signed = builder.sign();
+```
+
+**Use cases:**
+- Add text notes to transactions
+- Include metadata or labels
+- Encode mining pool identifiers
+- Create application messages
+
+### `encodePayloadAsJson(data: unknown)`
+
+Encode object as JSON, then convert to hex payload.
+
+**Parameters:**
+- `data` - Any JSON-serializable value (object, array, primitive)
+
+**Returns:** `string` - Hex-encoded JSON payload
+
+**Throws:**
+- Error if JSON serialization fails (circular references, BigInt, etc.)
+
+**Examples:**
+```typescript
+// Vote casting
+const voteData = {
+  type: 'vote',
+  pollId: '550e8400-e29b-41d4-a716-446655440000',
+  optionIndex: 2,
+  timestamp: Date.now()
+};
+
+const voteHex = HoosatUtils.encodePayloadAsJson(voteData);
+
+// Send vote transaction
+builder
+  .addInput(utxo, wallet.privateKey)
+  .addOutput(voteServiceAddress, serviceFee)
+  .setSubnetworkId('0300000000000000000000000000000000000000')
+  .setPayload(voteHex)
+  .addChangeOutput(wallet.address);
+
+// Poll creation
+const pollData = {
+  type: 'poll_create',
+  v: 1,
+  title: 'Community Treasury Allocation',
+  description: 'How should we allocate Q1 2025 treasury funds?',
+  options: [
+    'Development & Infrastructure (40%)',
+    'Marketing & Community (30%)',
+    'Security Audits (20%)',
+    'Reserve (10%)'
+  ],
+  startDate: Date.now(),
+  endDate: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days
+  votingType: 'single',
+  votingMode: 'weighted',
+  category: 'governance',
+  minBalance: 100
+};
+
+const pollHex = HoosatUtils.encodePayloadAsJson(pollData);
+
+// Application events
+const eventData = {
+  event: 'asset_transfer',
+  assetId: 'HTN-NFT-001',
+  from: wallet.address,
+  to: recipient,
+  metadata: {
+    rarity: 'legendary',
+    attributes: ['fire', 'speed']
+  }
+};
+
+const eventHex = HoosatUtils.encodePayloadAsJson(eventData);
+```
+
+**Best practices:**
+```typescript
+// Add version field for future compatibility
+const payload = {
+  v: 1,  // Schema version
+  type: 'action_name',
+  // ... your data
+};
+
+// Include timestamp for chronological ordering
+const payload = {
+  timestamp: Date.now(),
+  // ... your data
+};
+
+// Validate payload size (blockchain limits)
+const hex = HoosatUtils.encodePayloadAsJson(data);
+if (hex.length > 1000) {
+  console.warn('Large payload - may increase fees');
+}
+```
+
+**Use cases:**
+- Vote service integration
+- Application protocol messages
+- Structured metadata storage
+- Multi-party coordination
+
+### `isJsonPayload(hexPayload: string)`
+
+Check if hex payload contains valid JSON.
+
+**Parameters:**
+- `hexPayload` - Hex-encoded payload
+
+**Returns:** `boolean` - True if payload is valid JSON, false otherwise
+
+**Examples:**
+```typescript
+// JSON payload
+const jsonHex = '7b2274797065223a22766f7465227d';
+console.log(HoosatUtils.isJsonPayload(jsonHex)); // true
+
+// Plain text payload
+const textHex = '48656c6c6f';
+console.log(HoosatUtils.isJsonPayload(textHex)); // false
+
+// Binary mining data
+const binaryHex = '52721f0600000000897f5561...';
+console.log(HoosatUtils.isJsonPayload(binaryHex)); // false
+
+// Empty payload
+console.log(HoosatUtils.isJsonPayload('')); // false
+
+// Use for conditional parsing
+async function processTransaction(tx: Transaction) {
+  if (!tx.payload) {
+    console.log('No payload');
+    return;
+  }
+
+  if (HoosatUtils.isJsonPayload(tx.payload)) {
+    // Parse as structured data
+    const data = HoosatUtils.parsePayloadAsJson(tx.payload);
+    console.log('Structured data:', data);
+  } else {
+    // Decode as text or treat as binary
+    try {
+      const text = HoosatUtils.decodePayload(tx.payload);
+      console.log('Text payload:', text);
+    } catch {
+      console.log('Binary payload, size:', tx.payload.length / 2);
+    }
+  }
+}
+```
+
+**Use cases:**
+- Route transaction processing based on payload type
+- Validate application protocol compliance
+- Explorer UI display logic
+- Analytics and indexing
+
+### `decodePayloadSafe(hexPayload: string)`
+
+Safe payload decoding with comprehensive validation and metadata.
+
+**Parameters:**
+- `hexPayload` - Hex-encoded payload
+
+**Returns:** Object with decoded payload and validation flags
+```typescript
+{
+  decoded: string;      // Decoded text (may contain invalid UTF-8 chars)
+  isValidUtf8: boolean; // True if valid UTF-8 encoding
+  isJson: boolean;      // True if valid JSON
+  raw: string;          // Original hex payload (without 0x prefix)
+}
+```
+
+**Examples:**
+```typescript
+// Valid UTF-8 text
+const result1 = HoosatUtils.decodePayloadSafe('48656c6c6f');
+console.log(result1);
+// {
+//   decoded: 'Hello',
+//   isValidUtf8: true,
+//   isJson: false,
+//   raw: '48656c6c6f'
+// }
+
+// Valid JSON
+const result2 = HoosatUtils.decodePayloadSafe('7b2274797065223a22766f7465227d');
+console.log(result2);
+// {
+//   decoded: '{"type":"vote"}',
+//   isValidUtf8: true,
+//   isJson: true,
+//   raw: '7b2274797065223a22766f7465227d'
+// }
+
+// Binary data (invalid UTF-8)
+const result3 = HoosatUtils.decodePayloadSafe('ff00ff00');
+console.log(result3);
+// {
+//   decoded: '����',
+//   isValidUtf8: false,
+//   isJson: false,
+//   raw: 'ff00ff00'
+// }
+
+// Safe transaction processing
+async function analyzePayload(tx: Transaction) {
+  if (!tx.payload) return;
+
+  const { decoded, isValidUtf8, isJson, raw } = HoosatUtils.decodePayloadSafe(tx.payload);
+
+  console.log(`Payload size: ${raw.length / 2} bytes`);
+
+  if (isJson) {
+    const data = JSON.parse(decoded);
+    console.log('JSON payload:', data);
+
+    // Route by type
+    switch (data.type) {
+      case 'vote':
+        await processVote(data);
+        break;
+      case 'poll_create':
+        await processPoll(data);
+        break;
+      default:
+        console.log('Unknown JSON type:', data.type);
+    }
+  } else if (isValidUtf8) {
+    console.log('Text payload:', decoded);
+  } else {
+    console.log('Binary payload (hex):', raw);
+  }
+}
+
+// Explorer display logic
+function renderPayload(hexPayload: string) {
+  const { decoded, isValidUtf8, isJson } = HoosatUtils.decodePayloadSafe(hexPayload);
+
+  if (isJson) {
+    return {
+      type: 'json',
+      data: JSON.parse(decoded),
+      display: JSON.stringify(JSON.parse(decoded), null, 2)
+    };
+  }
+
+  if (isValidUtf8) {
+    return {
+      type: 'text',
+      data: decoded,
+      display: decoded
+    };
+  }
+
+  return {
+    type: 'binary',
+    data: decoded,
+    display: `Binary data (${hexPayload.length / 2} bytes)`
+  };
+}
+```
+
+**Use cases:**
+- Robust transaction indexing
+- Explorer payload display
+- Safe payload parsing with fallbacks
+- Analytics without crashes
+
+### Payload Best Practices
+
+#### 1. Always Use Subnetwork 0x03
+
+Payloads are ONLY supported on subnetwork 0x03:
+
+```typescript
+// Correct
+builder.setSubnetworkId('0300000000000000000000000000000000000000');
+builder.setPayload(encodedData);
+
+// Wrong - payloads on native subnetwork will fail
+builder.setSubnetworkId('0000000000000000000000000000000000000000');
+builder.setPayload(encodedData); // ❌ Will not work
+```
+
+#### 2. Include Payload Size in Fee Calculation
+
+```typescript
+import { HoosatCrypto } from 'hoosat-sdk';
+
+const payload = HoosatUtils.encodePayloadAsJson(data);
+const payloadSize = payload.length / 2; // Bytes
+
+// Calculate fee including payload
+const fee = HoosatCrypto.calculateMinFee(
+  inputs.length,
+  outputs.length,
+  payloadSize
+);
+
+builder.setFee(fee.toString());
+```
+
+#### 3. Validate Payload Before Encoding
+
+```typescript
+// Check payload won't be too large
+const MAX_PAYLOAD_SIZE = 10000; // 10KB limit
+
+const testHex = HoosatUtils.encodePayloadAsJson(data);
+if (testHex.length / 2 > MAX_PAYLOAD_SIZE) {
+  throw new Error('Payload too large');
+}
+
+// Validate JSON schema
+interface VotePayload {
+  type: 'vote';
+  pollId: string;
+  optionIndex: number;
+}
+
+function isValidVote(data: unknown): data is VotePayload {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'type' in data &&
+    data.type === 'vote' &&
+    'pollId' in data &&
+    typeof data.pollId === 'string' &&
+    'optionIndex' in data &&
+    typeof data.optionIndex === 'number'
+  );
+}
+
+if (!isValidVote(data)) {
+  throw new Error('Invalid vote payload');
+}
+```
+
+#### 4. Handle Decoding Errors Gracefully
+
+```typescript
+// Use safe decode for unknown payloads
+const { decoded, isValidUtf8, isJson } = HoosatUtils.decodePayloadSafe(payload);
+
+if (isJson) {
+  try {
+    const data = JSON.parse(decoded);
+    // Process JSON
+  } catch (e) {
+    console.error('JSON parse failed:', e);
+  }
+} else if (isValidUtf8) {
+  // Process text
+} else {
+  // Handle binary data
+}
+```
+
+### Complete Transaction Example with Payload
+
+```typescript
+import {
+  HoosatClient,
+  HoosatTxBuilder,
+  HoosatCrypto,
+  HoosatUtils
+} from 'hoosat-sdk';
+
+async function castVote(
+  wallet: { address: string; privateKey: string },
+  voteServiceAddress: string,
+  pollId: string,
+  optionIndex: number
+) {
+  const client = new HoosatClient({ host: 'api.hoosat.net' });
+
+  // 1. Prepare vote payload
+  const voteData = {
+    type: 'vote',
+    pollId,
+    optionIndex,
+    timestamp: Date.now()
+  };
+
+  const payload = HoosatUtils.encodePayloadAsJson(voteData);
+  const payloadSize = payload.length / 2;
+
+  console.log(`Vote payload: ${payloadSize} bytes`);
+
+  // 2. Get UTXOs
+  const utxosResult = await client.getUtxosByAddresses([wallet.address]);
+  if (!utxosResult.ok) throw new Error('Failed to get UTXOs');
+
+  const utxos = utxosResult.result.utxos;
+
+  // 3. Calculate service fee (includes payload)
+  const serviceFee = HoosatUtils.amountToSompi('0.01'); // 0.01 HTN
+  const txFee = HoosatCrypto.calculateMinFee(1, 2, payloadSize);
+
+  // 4. Build transaction
+  const builder = new HoosatTxBuilder();
+
+  builder.addInput(utxos[0], wallet.privateKey);
+  builder.addOutput(voteServiceAddress, serviceFee);
+  builder.setSubnetworkId('0300000000000000000000000000000000000000');
+  builder.setPayload(payload);
+  builder.setFee(txFee.toString());
+  builder.addChangeOutput(wallet.address);
+
+  // 5. Sign and submit
+  const signedTx = builder.sign();
+  const result = await client.submitTransaction(signedTx);
+
+  if (result.ok) {
+    console.log('Vote cast! TX:', result.result.transactionId);
+    return result.result.transactionId;
+  } else {
+    throw new Error(`Vote failed: ${result.error}`);
+  }
+}
+
+// Usage
+const txId = await castVote(
+  myWallet,
+  'hoosat:qz95mwas8ja7ucsernv9z335rdxxqswff7wvzenl29qukn5qs3lsqfsa4pd74',
+  '550e8400-e29b-41d4-a716-446655440000',
+  2
+);
+```
+
+### Real-World Payload Examples
+
+#### Vote Service Poll Creation
+
+```typescript
+const pollPayload = {
+  type: 'poll_create',
+  v: 1,
+  title: 'Network Upgrade Proposal',
+  description: 'Vote on implementing BIP-340 Schnorr signatures',
+  options: ['Approve', 'Reject', 'Abstain'],
+  startDate: Date.now(),
+  endDate: Date.now() + (14 * 24 * 60 * 60 * 1000),
+  votingType: 'single',
+  votingMode: 'weighted',
+  category: 'governance',
+  minBalance: 1000
+};
+
+const hex = HoosatUtils.encodePayloadAsJson(pollPayload);
+```
+
+#### Mining Pool Worker ID
+
+```typescript
+// Binary header (34 bytes) + UTF-8 identifier
+const workerInfo = '1.6.2/hoo_gpu/1.2.12 via htn-stratum-bridge_v1.6.0 as worker RIG02';
+const hex = HoosatUtils.encodePayload(workerInfo);
+```
+
+#### Data Anchoring
+
+```typescript
+const anchorPayload = {
+  type: 'anchor',
+  v: 1,
+  documentHash: 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+  timestamp: Date.now(),
+  metadata: {
+    filename: 'contract_v2.pdf',
+    size: 245760,
+    parties: ['Alice', 'Bob']
+  }
+};
+
+const hex = HoosatUtils.encodePayloadAsJson(anchorPayload);
+```
+
 ## Next Steps
 
 - [HoosatCrypto](./crypto.md) - Cryptographic operations
-- [HoosatTxBuilder](./tx-builder.md) - Transaction building
+- [HoosatTxBuilder](./tx-builder.md) - Transaction building with payload support
